@@ -1,0 +1,138 @@
+﻿@page "/opening"
+@using IT_Asset_ManagementClient.Models
+@inject OpeningEntryService OpeningService
+@inject AssetMasterService AssetService
+
+<h3>Opening Inventory</h3>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Search by asset, capacity, or remarks..." @bind="searchText" />
+</div>
+
+<h4>Add Opening Stock</h4>
+<EditForm Model="@newEntry" OnValidSubmit="AddOpeningEntry">
+    <div class="row mb-2">
+        <div class="col-md-2">
+            <label>Asset</label>
+            <InputSelect class="form-control" @bind-Value="newEntry.AssetId">
+                <option value="">Select Asset</option>
+                @foreach (var asset in assets)
+                {
+                    <option value="@asset.Id">@asset.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="col-md-2">
+            <label>Description / Model</label>
+            <InputText class="form-control" @bind-Value="newEntry.Description" />
+        </div>
+        <div class="col-md-2">
+            <label>Capacity</label>
+            <InputText class="form-control" @bind-Value="newEntry.Capacity" />
+        </div>
+        <div class="col-md-1">
+            <label>Qty</label>
+            <InputNumber class="form-control" @bind-Value="newEntry.Quantity" />
+        </div>
+        <div class="col-md-1">
+            <label>Rate</label>
+            <InputNumber class="form-control" @bind-Value="newEntry.Rate" />
+        </div>
+        <div class="col-md-2 d-flex flex-column justify-content-center">
+            <div class="form-check mb-1">
+                <InputCheckbox class="form-check-input" @bind-Value="newEntry.Damaged" id="openingDamagedCheck" />
+                <label class="form-check-label ms-2" for="openingDamagedCheck">Damaged</label>
+            </div>
+            @if (newEntry.Damaged)
+            {
+                <div>
+                    <label class="form-label mb-0">Damaged Date</label>
+                    <InputDate class="form-control" @bind-Value="newEntry.DamagedDate" />
+                </div>
+            }
+        </div>
+        <div class="col-md-2">
+            <label>Remarks</label>
+            <InputText class="form-control" @bind-Value="newEntry.Remarks" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-success">Add Opening</button>
+</EditForm>
+
+<hr />
+
+<h4>All Opening Stocks</h4>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Asset</th>
+            <th>Description</th>
+            <th>Capacity</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>Damaged</th>
+            <th>Damaged Date</th>
+            <th>Remarks</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var o in FilteredOpenings)
+        {
+            <tr>
+                <td>@assets.FirstOrDefault(a => a.Id == o.AssetId)?.Name</td>
+                <td>@o.Description</td>
+                <td>@o.Capacity</td>
+                <td>@o.Quantity</td>
+                <td>@o.Rate</td>
+                <td>@(o.Damaged ? "Yes" : "No")</td>
+                <td>@o.DamagedDate?.ToShortDateString()</td>
+                <td>@o.Remarks</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteOpeningEntry(o)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    string searchText = "";
+    List<OpeningEntry> openings = new();
+    OpeningEntryCreateDto newEntry = new OpeningEntryCreateDto();
+    List<AssetMaster> assets = new();
+
+    IEnumerable<OpeningEntry> FilteredOpenings =>
+        string.IsNullOrWhiteSpace(searchText)
+        ? openings
+        : openings.Where(o =>
+            (assets.FirstOrDefault(a => a.Id == o.AssetId)?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (o.Description?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (o.Capacity?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (o.Remarks?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+        );
+
+    protected override async Task OnInitializedAsync()
+    {
+        assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
+        openings = await OpeningService.GetOpeningsAsync() ?? new List<OpeningEntry>();
+    }
+
+    async Task AddOpeningEntry()
+    {
+        var result = await OpeningService.CreateOpeningAsync(newEntry);
+        if (result != null)
+        {
+            openings.Add(result);
+            newEntry = new OpeningEntryCreateDto();
+        }
+    }
+
+    async Task DeleteOpeningEntry(OpeningEntry o)
+    {
+        if (await OpeningService.DeleteOpeningAsync(o.Id))
+        {
+            openings.Remove(o);
+        }
+    }
+}

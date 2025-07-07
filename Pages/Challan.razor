@@ -1,0 +1,144 @@
+﻿@page "/challans"
+@using IT_Asset_ManagementClient.Models
+@inject ChallansService ChallansService
+@inject AssetMasterService AssetService
+
+<h3>Inventory Movement (Challan)</h3>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Search by asset, serial, or remarks..." @bind="searchText" />
+</div>
+
+<h4>Add New Challan</h4>
+<EditForm Model="@newChallan" OnValidSubmit="AddChallan">
+    <div class="row mb-2">
+        <div class="col-md-2">
+            <label>Date</label>
+            <InputDate class="form-control" @bind-Value="newChallan.Date" />
+        </div>
+        <div class="col-md-2">
+            <label>Asset</label>
+            <InputSelect class="form-control" @bind-Value="newChallan.AssetId">
+                <option value="">Select Asset</option>
+                @foreach (var asset in assets)
+                {
+                    <option value="@asset.Id">@asset.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="col-md-2">
+            <label>Serial No</label>
+            <InputText class="form-control" @bind-Value="newChallan.SerialNo" />
+        </div>
+        <div class="col-md-2">
+            <label>Movement Type</label>
+            <InputSelect class="form-control" @bind-Value="newChallan.MovementType">
+                <option value="">Select</option>
+                <option value="Inward">Inward</option>
+                <option value="Outward">Outward</option>
+            </InputSelect>
+        </div>
+        <div class="col-md-1">
+            <label>Qty</label>
+            <InputNumber class="form-control" @bind-Value="newChallan.Quantity" />
+        </div>
+        <div class="col-md-2 d-flex flex-column justify-content-center">
+            <div class="form-check mb-1">
+                <InputCheckbox class="form-check-input" @bind-Value="newChallan.Damaged" id="challanDamagedCheck" />
+                <label class="form-check-label ms-2" for="challanDamagedCheck">Damaged</label>
+            </div>
+            @if (newChallan.Damaged)
+            {
+                <div>
+                    <label class="form-label mb-0 mt-1">Damaged Date</label>
+                    <InputDate class="form-control" @bind-Value="newChallan.DamagedDate" />
+                </div>
+            }
+        </div>
+        <div class="col-md-2">
+            <label>Remarks</label>
+            <InputText class="form-control" @bind-Value="newChallan.Remarks" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-success">Add Challan</button>
+</EditForm>
+
+<hr />
+
+<h4>All Challans</h4>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Asset Name</th>
+            <th>Serial No</th>
+            <th>Movement Type</th>
+            <th>Qty</th>
+            <th>Damaged</th>
+            <th>Damaged Date</th>
+            <th>Remarks</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var c in FilteredChallans)
+        {
+            <tr>
+                <td>@c.Date.ToShortDateString()</td>
+                <td>@assets.FirstOrDefault(a => a.Id == c.AssetId)?.Name</td>
+                <td>@c.SerialNo</td>
+                <td>@c.MovementType</td>
+                <td>@c.Quantity</td>
+                <td>@(c.Damaged ? "Yes" : "No")</td>
+                <td>@c.DamagedDate?.ToShortDateString()</td>
+                <td>@c.Remarks</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" @onclick="() => DeleteChallan(c)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    string searchText = "";
+    List<Challans> challans = new();
+    List<AssetMaster> assets = new();
+    ChallansCreateDto newChallan = new ChallansCreateDto
+        {
+            Date = DateTime.Today
+        };
+
+    IEnumerable<Challans> FilteredChallans =>
+        string.IsNullOrWhiteSpace(searchText)
+            ? challans
+            : challans.Where(c =>
+                (assets.FirstOrDefault(a => a.Id == c.AssetId)?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (c.SerialNo?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (c.Remarks?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+
+    protected override async Task OnInitializedAsync()
+    {
+        assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
+        challans = await ChallansService.GetChallansAsync() ?? new List<Challans>();
+    }
+
+    async Task AddChallan()
+    {
+        var result = await ChallansService.CreateChallanAsync(newChallan);
+        if (result != null)
+        {
+            challans.Add(result);
+            newChallan = new ChallansCreateDto { Date = DateTime.Today };
+        }
+    }
+
+    async Task DeleteChallan(Challans c)
+    {
+        if (await ChallansService.DeleteChallanAsync(c.Id))
+        {
+            challans.Remove(c);
+        }
+    }
+}
