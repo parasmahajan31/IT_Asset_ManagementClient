@@ -30,7 +30,7 @@ jobs:
       name: Build And Deploy
       uses: Azure/static-web-apps-deploy@v1
       with:
-        azure_static_web_apps_api_token: ${{ secrets.ITManagemnet_SPN }}
+        azure_static_web_apps_api_token: ${{ '5582d2098695dd564e9af80d63d477961aa8f48aee94e5f197ecf716f6bba48502-bcccfd0d-5aae-492d-894b-0c7691803f83010131808a1e9510' }}
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         action: upload
         deployment_environment: ${{env.DEPLOYMENT_ENVIRONMENT}}
@@ -46,6 +46,6 @@ jobs:
       name: Close Pull Request
       uses: Azure/static-web-apps-deploy@v1
       with:
-        azure_static_web_apps_api_token: ${{ secrets.ITManagemnet_SPN }}
+        azure_static_web_apps_api_token: ${{ '5582d2098695dd564e9af80d63d477961aa8f48aee94e5f197ecf716f6bba48502-bcccfd0d-5aae-492d-894b-0c7691803f83010131808a1e9510' }}
         action: close
         repo_token: ${{ secrets.GITHUB_TOKEN }}
