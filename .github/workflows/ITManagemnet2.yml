@@ -13,7 +13,7 @@ on:
     - master
 env:
   AZURE_STATIC_WEBAPP_NAME: ITManagemnet
-  APP_DIRECTORY: IT_Asset_ManagementClient
+  APP_DIRECTORY: '/'
   API_DIRECTORY: ''
   OUTPUT: wwwroot
   DEPLOYMENT_ENVIRONMENT: preview
