@@ -3,10 +3,11 @@
 @inject OpeningEntryService OpeningService
 @inject AssetMasterService AssetService
 @inject UserService UserService
+
 <h3>Opening Inventory</h3>
 <div class="mb-2"><strong>User:</strong> @currentUser</div>
 <div class="mb-3">
-    <input class="form-control" placeholder="Search by asset, capacity, or remarks..." @bind="searchText" />
+    <input class="form-control" placeholder="Search by asset or remarks..." @bind="searchText" />
 </div>
 
 <h4>Add Opening Stock</h4>
@@ -21,14 +22,6 @@
                     <option value="@asset.Id">@asset.Name</option>
                 }
             </InputSelect>
-        </div>
-        <div class="col-md-2">
-            <label>Description / Model</label>
-            <InputText class="form-control" @bind-Value="newEntry.Description" />
-        </div>
-        <div class="col-md-2">
-            <label>Capacity</label>
-            <InputText class="form-control" @bind-Value="newEntry.Capacity" />
         </div>
         <div class="col-md-1">
             <label>Qty</label>
@@ -66,8 +59,6 @@
     <thead>
         <tr>
             <th>Asset</th>
-            <th>Description</th>
-            <th>Capacity</th>
             <th>Quantity</th>
             <th>Rate</th>
             <th>Damaged</th>
@@ -81,8 +72,6 @@
         {
             <tr>
                 <td>@assets.FirstOrDefault(a => a.Id == o.AssetId)?.Name</td>
-                <td>@o.Description</td>
-                <td>@o.Capacity</td>
                 <td>@o.Quantity</td>
                 <td>@o.Rate</td>
                 <td>@(o.Damaged ? "Yes" : "No")</td>
@@ -99,24 +88,23 @@
 @code {
     string searchText = "";
     List<OpeningEntry> openings = new();
-    OpeningEntryCreateDto newEntry = new OpeningEntryCreateDto();
+    OpeningEntryCreateDto newEntry = new();
     List<AssetMaster> assets = new();
     string? currentUser;
+
     IEnumerable<OpeningEntry> FilteredOpenings =>
         string.IsNullOrWhiteSpace(searchText)
-        ? openings
-        : openings.Where(o =>
-            (assets.FirstOrDefault(a => a.Id == o.AssetId)?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (o.Description?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (o.Capacity?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (o.Remarks?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-        );
+            ? openings
+            : openings.Where(o =>
+                (assets.FirstOrDefault(a => a.Id == o.AssetId)?.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+                || (o.Remarks?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
 
     protected override async Task OnInitializedAsync()
     {
         currentUser = await UserService.GetUserAsync();
-        assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
-        openings = await OpeningService.GetOpeningsAsync() ?? new List<OpeningEntry>();
+        assets = await AssetService.GetAssetsAsync() ?? new();
+        openings = await OpeningService.GetOpeningsAsync() ?? new();
     }
 
     async Task AddOpeningEntry()
@@ -125,7 +113,7 @@
         if (result != null)
         {
             openings.Add(result);
-            newEntry = new OpeningEntryCreateDto();
+            newEntry = new();
         }
     }
 

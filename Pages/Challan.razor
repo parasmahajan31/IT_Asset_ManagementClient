@@ -4,13 +4,21 @@
 @inject ChallansService ChallansService
 @inject AssetMasterService AssetService
 @inject UserService UserService
+
 <h3>Inventory Movement (Challan)</h3>
-<div class="mb-2"><strong>User:</strong> @currentUser</div>
+
+<div class="mb-2">
+    <strong>User:</strong> @currentUser
+</div>
+
 <div class="mb-3">
-    <input class="form-control" placeholder="Search by asset, serial, or remarks..." @bind="searchText" />
+    <input class="form-control"
+           placeholder="Search by asset, serial, or remarks..."
+           @bind="searchText" />
 </div>
 
 <h4>Add New Challan</h4>
+
 <EditForm Model="@newChallan" OnValidSubmit="AddChallan">
     <div class="row mb-2">
         <div class="col-md-2">
@@ -67,6 +75,7 @@
 <hr />
 
 <h4>All Challans</h4>
+
 <table class="table table-striped table-bordered">
     <thead>
         <tr>
@@ -107,9 +116,11 @@
     List<AssetMaster> assets = new();
     ChallansCreateDto newChallan = new ChallansCreateDto
         {
-            Date = DateTime.Today
+            Date = DateTime.Today,
+            MovementType = "Outward"  // default value
         };
     string? currentUser;
+
     IEnumerable<Challans> FilteredChallans =>
         string.IsNullOrWhiteSpace(searchText)
             ? challans
@@ -122,8 +133,8 @@
     protected override async Task OnInitializedAsync()
     {
         currentUser = await UserService.GetUserAsync();
-        assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
-        challans = await ChallansService.GetChallansAsync() ?? new List<Challans>();
+        assets = await AssetService.GetAssetsAsync() ?? new();
+        challans = await ChallansService.GetChallansAsync() ?? new();
     }
 
     async Task AddChallan()
@@ -132,7 +143,12 @@
         if (result != null)
         {
             challans.Add(result);
-            newChallan = new ChallansCreateDto { Date = DateTime.Today };
+            // Reset with default date and movement type so 'Outward' remains selected
+            newChallan = new ChallansCreateDto
+                {
+                    Date = DateTime.Today,
+                    MovementType = "Outward"
+                };
         }
     }
 
