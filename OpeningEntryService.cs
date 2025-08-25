@@ -1,6 +1,7 @@
 ﻿namespace IT_Asset_ManagementClient
 {
-    using IT_Asset_ManagementClient.Models;
+    using global::IT_Asset_ManagementClient.Models;
+    
     using System.Net.Http.Json;
 
     public class OpeningEntryService

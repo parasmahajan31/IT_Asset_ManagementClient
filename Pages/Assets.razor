@@ -2,23 +2,29 @@
 @using IT_Asset_ManagementClient.Models
 @using Microsoft.AspNetCore.Components.Forms
 @inject AssetMasterService AssetService
+@inject UserService UserSvc
 
 <h3>Asset Master</h3>
+<div class="mb-2"><strong>User:</strong> @currentUser</div>
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <div class="alert alert-danger">@error</div>
+}
 
 <div class="mb-3">
-    <input class="form-control" placeholder="Search by name, dept, or user..." @bind="searchText" />
+    <input class="form-control" placeholder="Search assets..." @bind="searchText" />
 </div>
 
 <h4>Add New Asset</h4>
 <EditForm Model="@newAsset" OnValidSubmit="AddAsset">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
     <div class="row mb-2">
         <div class="col-md-2">
             <label>Name</label>
             <InputText class="form-control" @bind-Value="newAsset.Name" />
-        </div>
-        <div class="col-md-2">
-            <label>Dept</label>
-            <InputText class="form-control" @bind-Value="newAsset.Dept" />
         </div>
         <div class="col-md-2">
             <label>Product</label>
@@ -36,32 +42,9 @@
             <label>Warranty</label>
             <InputText class="form-control" @bind-Value="newAsset.Warranty" />
         </div>
-    </div>
-    <div class="row mb-2">
         <div class="col-md-2">
-            <label>Condition</label>
-            <InputText class="form-control" @bind-Value="newAsset.Condition" />
-        </div>
-        <div class="col-md-2">
-            <label>User</label>
-            <InputText class="form-control" @bind-Value="newAsset.User" />
-        </div>
-        <div class="col-md-2">
-            <label>Department</label>
-            <InputText class="form-control" @bind-Value="newAsset.Department" />
-        </div>
-        <div class="col-md-2 d-flex flex-column justify-content-center">
-            <div class="form-check mb-1">
-                <InputCheckbox class="form-check-input" @bind-Value="newAsset.Damaged" id="assetDamagedCheck" />
-                <label class="form-check-label ms-2" for="assetDamagedCheck">Damaged</label>
-            </div>
-            @if (newAsset.Damaged)
-            {
-                <div>
-                    <label class="form-label mb-0 mt-1">Damaged Date</label>
-                    <InputDate class="form-control" @bind-Value="newAsset.DamagedDate" />
-                </div>
-            }
+            <label>Product Type</label>
+            <InputText class="form-control" @bind-Value="newAsset.ProductType" />
         </div>
         <div class="col-md-4 d-flex align-items-end">
             <button type="submit" class="btn btn-success">Add Asset</button>
@@ -76,16 +59,11 @@
     <thead>
         <tr>
             <th>Name</th>
-            <th>Dept</th>
             <th>Product</th>
             <th>Brand</th>
             <th>Model</th>
             <th>Warranty</th>
-            <th>Condition</th>
-            <th>User</th>
-            <th>Department</th>
-            <th>Damaged</th>
-            <th>Damaged Date</th>
+            <th>Product Type</th>
             <th></th>
         </tr>
     </thead>
@@ -94,16 +72,11 @@
         {
             <tr>
                 <td>@asset.Name</td>
-                <td>@asset.Dept</td>
                 <td>@asset.Product</td>
                 <td>@asset.Brand</td>
                 <td>@asset.Model</td>
                 <td>@asset.Warranty</td>
-                <td>@asset.Condition</td>
-                <td>@asset.User</td>
-                <td>@asset.Department</td>
-                <td>@(asset.Damaged ? "Yes" : "No")</td>
-                <td>@asset.DamagedDate?.ToShortDateString()</td>
+                <td>@asset.ProductType</td>
                 <td>
                     <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsset(asset)">Delete</button>
                 </td>
@@ -113,44 +86,65 @@
 </table>
 
 @code {
-    string searchText = "";
+    string searchText = string.Empty;
     List<AssetMaster> assets = new();
     AssetMasterCreateDto newAsset = new();
+    string? currentUser;
+    string? error;
 
     IEnumerable<AssetMaster> FilteredAssets =>
         string.IsNullOrWhiteSpace(searchText)
-        ? assets
-        : assets.Where(a =>
-            (a.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (a.Dept?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-            || (a.User?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false)
-        );
+            ? assets
+            : assets.Where(a =>
+                (a.Name?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Product?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Brand?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Model?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.Warranty?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (a.ProductType?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false));
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAssets();
+        try
+        {
+            currentUser = await UserSvc.GetUserAsync();
+            await LoadAssets();
+        }
+        catch (Exception ex) { error = ex.Message; }
     }
 
     async Task LoadAssets()
     {
-        assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
+        try
+        {
+            assets = await AssetService.GetAssetsAsync() ?? new();
+        }
+        catch (Exception ex) { error = ex.Message; }
     }
 
     async Task AddAsset()
     {
-        var result = await AssetService.CreateAssetAsync(newAsset);
-        if (result != null)
+        try
         {
-            assets.Add(result);
-            newAsset = new AssetMasterCreateDto();
+            var created = await AssetService.CreateAssetAsync(newAsset);
+            if (created is not null)
+            {
+                newAsset = new AssetMasterCreateDto(); // reset form
+                await LoadAssets();                    // refresh authoritative list
+            }
         }
+        catch (Exception ex) { error = ex.Message; }
     }
 
     async Task DeleteAsset(AssetMaster asset)
     {
-        if (await AssetService.DeleteAssetAsync(asset.Id))
+        try
         {
-            assets.Remove(asset);
+            if (await AssetService.DeleteAssetAsync(asset.Id))
+            {
+                await LoadAssets(); // refresh after delete
+            }
         }
+        catch (Exception ex) { error = ex.Message; }
     }
 }

@@ -1,36 +1,38 @@
-﻿using IT_Asset_ManagementClient.Models;
-using System.Net.Http.Json;
-using System.Net.NetworkInformation;
+﻿using System.Net.Http.Json;
+using IT_Asset_ManagementClient.Models;
 
-namespace IT_Asset_ManagementClient
+
+namespace IT_Asset_ManagementClient;
+
+
+public class AssetMasterService
 {
+    private readonly IHttpClientFactory _http;
+    private HttpClient Api => _http.CreateClient("Api");
 
 
-    public class AssetMasterService
+    public AssetMasterService(IHttpClientFactory http) => _http = http;
+
+
+    public async Task<List<AssetMaster>> GetAssetsAsync(CancellationToken ct = default)
+    => await Api.GetFromJsonAsync<List<AssetMaster>>("api/AssetMaster", ct) ?? new();
+
+
+    public Task<AssetMaster?> GetAssetAsync(int id, CancellationToken ct = default)
+    => Api.GetFromJsonAsync<AssetMaster>($"api/AssetMaster/{id}", ct);
+
+
+    public async Task<AssetMaster?> CreateAssetAsync(AssetMasterCreateDto dto, CancellationToken ct = default)
     {
-        private readonly HttpClient _http;
-
-        public AssetMasterService(HttpClient http) => _http = http;
-
-        public async Task<List<AssetMaster>> GetAssetsAsync()
-            => await _http.GetFromJsonAsync<List<AssetMaster>>("api/AssetMaster");
-
-        public async Task<AssetMaster?> GetAssetAsync(int id)
-            => await _http.GetFromJsonAsync<AssetMaster>($"api/AssetMaster/{id}");
-
-        public async Task<AssetMaster?> CreateAssetAsync(AssetMasterCreateDto dto)
-        {
-            var response = await _http.PostAsJsonAsync("api/AssetMaster", dto);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<AssetMaster>();
-        }
-
-        public async Task<bool> DeleteAssetAsync(int id)
-        {
-            var response = await _http.DeleteAsync($"api/AssetMaster/{id}");
-            return response.IsSuccessStatusCode;
-        }
+        var resp = await Api.PostAsJsonAsync("api/AssetMaster", dto, ct);
+        resp.EnsureSuccessStatusCode();
+        return await resp.Content.ReadFromJsonAsync<AssetMaster>(cancellationToken: ct);
     }
 
 
+    public async Task<bool> DeleteAssetAsync(int id, CancellationToken ct = default)
+    {
+        var resp = await Api.DeleteAsync($"api/AssetMaster/{id}", ct);
+        return resp.IsSuccessStatusCode;
+    }
 }

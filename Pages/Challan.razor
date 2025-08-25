@@ -1,10 +1,11 @@
 ﻿@page "/challans"
-@using IT_Asset_ManagementClient.Models
+
+@using global::IT_Asset_ManagementClient.Models
 @inject ChallansService ChallansService
 @inject AssetMasterService AssetService
-
+@inject UserService UserService
 <h3>Inventory Movement (Challan)</h3>
-
+<div class="mb-2"><strong>User:</strong> @currentUser</div>
 <div class="mb-3">
     <input class="form-control" placeholder="Search by asset, serial, or remarks..." @bind="searchText" />
 </div>
@@ -108,7 +109,7 @@
         {
             Date = DateTime.Today
         };
-
+    string? currentUser;
     IEnumerable<Challans> FilteredChallans =>
         string.IsNullOrWhiteSpace(searchText)
             ? challans
@@ -120,6 +121,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await UserService.GetUserAsync();
         assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
         challans = await ChallansService.GetChallansAsync() ?? new List<Challans>();
     }

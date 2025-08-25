@@ -1,0 +1,65 @@
+﻿@page "/user"
+@inject UserService UserSvc
+
+
+@if (string.IsNullOrWhiteSpace(currentUser))
+{
+    <div class="mb-3">
+        <label>Username</label>
+        <InputText class="form-control" @bind-Value="userInput" />
+    </div>
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText class="form-control" type="password" @bind-Value="passwordInput" />
+    </div>
+
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="text-danger">@errorMessage</div>
+    }
+
+
+    <button class="btn btn-primary" @onclick="Login">Login</button>
+}
+else
+{
+    <p>Logged in as <strong>@currentUser</strong></p>
+    <button class="btn btn-secondary" @onclick="Logout">Logout</button>
+}
+
+
+@code {
+    string? userInput;
+    string? passwordInput;
+    string? currentUser;
+    string? errorMessage;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserSvc.GetUserAsync();
+    }
+
+
+    async Task Login()
+    {
+        if (userInput == "USER" && passwordInput == "USER")
+        {
+            await UserSvc.SetUserAsync(userInput!);
+            currentUser = userInput;
+            errorMessage = null;
+        }
+        else
+        {
+            errorMessage = "Invalid username or password.";
+        }
+    }
+
+
+    async Task Logout()
+    {
+        await UserSvc.ClearUserAsync();
+        currentUser = null;
+    }
+}

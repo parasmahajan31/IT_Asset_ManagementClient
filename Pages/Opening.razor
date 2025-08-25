@@ -1,10 +1,10 @@
 ﻿@page "/opening"
-@using IT_Asset_ManagementClient.Models
+@using global::IT_Asset_ManagementClient.Models
 @inject OpeningEntryService OpeningService
 @inject AssetMasterService AssetService
-
+@inject UserService UserService
 <h3>Opening Inventory</h3>
-
+<div class="mb-2"><strong>User:</strong> @currentUser</div>
 <div class="mb-3">
     <input class="form-control" placeholder="Search by asset, capacity, or remarks..." @bind="searchText" />
 </div>
@@ -101,7 +101,7 @@
     List<OpeningEntry> openings = new();
     OpeningEntryCreateDto newEntry = new OpeningEntryCreateDto();
     List<AssetMaster> assets = new();
-
+    string? currentUser;
     IEnumerable<OpeningEntry> FilteredOpenings =>
         string.IsNullOrWhiteSpace(searchText)
         ? openings
@@ -114,6 +114,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await UserService.GetUserAsync();
         assets = await AssetService.GetAssetsAsync() ?? new List<AssetMaster>();
         openings = await OpeningService.GetOpeningsAsync() ?? new List<OpeningEntry>();
     }
