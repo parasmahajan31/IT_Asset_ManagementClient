@@ -14,16 +14,14 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 
 // named API client
+// Program.cs (Blazor WASM)
 builder.Services.AddHttpClient("Api", client =>
 {
-#if DEBUG
-    client.BaseAddress = new Uri("https://localhost:7047/");
-#else
-client.BaseAddress = new Uri("https://itassetmanagementapi20250702124646.azurewebsites.net/");
-#endif
+    client.BaseAddress = new Uri("https://itassetmanagementapi20250702124646.azurewebsites.net/");
 });
-builder.Services.AddScoped<AssetMasterService>();
 
+builder.Services.AddScoped<AssetMasterService>();
+builder.Services.AddScoped<PurchasesService>();
 // services
 builder.Services.AddScoped<UserService>();
 
