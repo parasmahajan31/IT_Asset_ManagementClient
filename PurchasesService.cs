@@ -9,17 +9,17 @@
 
         public PurchasesService(HttpClient http) => _http = http;
 
-        public async Task<List<Purchase>> GetPurchasesAsync()
-            => await _http.GetFromJsonAsync<List<Purchase>>("api/Purchases");
+        public async Task<List<Purchases>> GetPurchasesAsync()
+            => await _http.GetFromJsonAsync<List<Purchases>>("api/Purchases");
 
-        public async Task<Purchase?> GetPurchaseAsync(int id)
-            => await _http.GetFromJsonAsync<Purchase>($"api/Purchases/{id}");
+        public async Task<Purchases?> GetPurchaseAsync(int id)
+            => await _http.GetFromJsonAsync<Purchases>($"api/Purchases/{id}");
 
-        public async Task<Purchase?> CreatePurchaseAsync(PurchasesCreateDto dto)
+        public async Task<Purchases?> CreatePurchaseAsync(PurchasesCreateDto dto)
         {
             var response = await _http.PostAsJsonAsync("api/Purchases", dto);
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<Purchase>();
+            return await response.Content.ReadFromJsonAsync<Purchases>();
         }
 
         public async Task<bool> DeletePurchaseAsync(int id)

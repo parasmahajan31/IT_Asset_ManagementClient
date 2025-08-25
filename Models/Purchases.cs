@@ -1,6 +1,6 @@
 ﻿namespace IT_Asset_ManagementClient.Models
 {
-    public class Purchase
+    public class Purchases
     {
         public int Id { get; set; }
         public DateTime Date { get; set; }

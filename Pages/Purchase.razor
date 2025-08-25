@@ -1,6 +1,5 @@
-﻿@page "/purchases"
+﻿@page "/purchase"
 @using IT_Asset_ManagementClient.Models
-@using PurchaseModel = IT_Asset_ManagementClient.Models.Purchase
 @inject PurchasesService PurchasesService
 @inject AssetMasterService AssetService
 @inject UserService UserService
@@ -13,7 +12,52 @@
 
 <h4>Add New Purchase</h4>
 <EditForm Model="@newPurchase" OnValidSubmit="AddPurchase">
-    <!-- form fields unchanged -->
+    <div class="row mb-2">
+        <div class="col-md-2">
+            <label>Date</label>
+            <InputDate class="form-control" @bind-Value="newPurchase.Date" />
+        </div>
+        <div class="col-md-2">
+            <label>Asset</label>
+            <InputSelect class="form-control" @bind-Value="newPurchase.AssetId">
+                <option value="">Select Asset</option>
+                @foreach (var asset in assets)
+                {
+                    <option value="@asset.Id">@asset.Name</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="col-md-2">
+            <label>Invoice No</label>
+            <InputText class="form-control" @bind-Value="newPurchase.InvoiceNo" />
+        </div>
+        <div class="col-md-1">
+            <label>Qty</label>
+            <InputNumber class="form-control" @bind-Value="newPurchase.Quantity" />
+        </div>
+        <div class="col-md-2">
+            <label>Rate</label>
+            <InputNumber class="form-control" @bind-Value="newPurchase.Rate" />
+        </div>
+        <div class="col-md-2 d-flex flex-column justify-content-center">
+            <div class="form-check mb-1">
+                <InputCheckbox class="form-check-input" @bind-Value="newPurchase.Damaged" id="purchaseDamagedCheck" />
+                <label class="form-check-label ms-2" for="purchaseDamagedCheck">Damaged</label>
+            </div>
+            @if (newPurchase.Damaged)
+            {
+                <div>
+                    <label class="form-label mb-0 mt-1">Damaged Date</label>
+                    <InputDate class="form-control" @bind-Value="newPurchase.DamagedDate" />
+                </div>
+            }
+        </div>
+        <div class="col-md-2">
+            <label>Remarks</label>
+            <InputText class="form-control" @bind-Value="newPurchase.Remarks" />
+        </div>
+    </div>
+    <button type="submit" class="btn btn-success">Add Purchase</button>
 </EditForm>
 
 <hr />
@@ -34,7 +78,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (PurchaseModel p in FilteredPurchases)
+        @foreach (var p in FilteredPurchases)
         {
             <tr>
                 <td>@p.Date.ToShortDateString()</td>
@@ -55,12 +99,12 @@
 
 @code {
     string searchText = "";
-    List<PurchaseModel> purchases = new();
+    List<Purchases> purchases = new();
     List<AssetMaster> assets = new();
     PurchasesCreateDto newPurchase = new() { Date = DateTime.Today };
     string? currentUser;
 
-    IEnumerable<PurchaseModel> FilteredPurchases =>
+    IEnumerable<Purchases> FilteredPurchases =>
         string.IsNullOrWhiteSpace(searchText)
             ? purchases
             : purchases.Where(p =>
@@ -86,7 +130,7 @@
         }
     }
 
-    async Task DeletePurchase(PurchaseModel p)
+    async Task DeletePurchase(Purchases p)
     {
         if (await PurchasesService.DeletePurchaseAsync(p.Id))
         {
